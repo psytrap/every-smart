@@ -1,0 +1,136 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bluetooth Echo</title>
+    <style>
+        #logging-info {
+            width: 100%;
+    box-sizing: border-box;
+            
+            height: 200px;
+            overflow: auto; /* Enable scrolling if the content is larger than the div */
+            border: 1px solid #000;
+            padding: 10px;
+            margin: 2px;
+            margin-bottom: 10px;
+
+            
+        }
+        #logging-info p {
+          margin-bottom: 0.25em; /* Adjust this value as needed */
+          margin-top: 0.25em; /* Adjust this value as needed */
+        }
+    </style>
+</head>
+<body>
+  <button id="connect_device" onclick="connectButton()">Connect to device</button>
+  <label for="device_status">Connection status:</label>
+  <input type="text" id="device_status" name="device_status" readonly>
+
+  <h1>Bluetooth Echo</h1>
+  <input id="log-message-input" type="text" placeholder="Enter a message" />
+  <br/>
+  <button onclick="sendMessage()">Send message</button>
+  <div id="logging-info">
+        <!-- Log messages will be added here -->
+  </div>
+<script id="es_script">
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API
+// https://googlechrome.github.io/samples/web-bluetooth/discover-services-and-characteristics-async-await.html
+
+var bluetooth = null;
+const UART_SERVICE_ID = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
+const CHARACTERISTIC_TX = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
+const CHARACTERISTIC_RX = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
+//const SERVICE_ID = "00000001-710e-4a5b-8d75-3e5b444bc3cf"
+//const CHARACTERISTIC_ID = '00000002-710e-4a5b-8d75-3e5b444bc3cf';
+//const CHARACTERISTIC_HISTORY_ID = '00000003-710e-4a5b-8d75-3e5b444bc3cf';
+
+
+async function connectDevice(device) {
+  device.addEventListener('gattserverdisconnected', onDisconnected);
+  bluetooth = await device.gatt.connect();
+  return new Promise(async (resolve) => {
+    console.log("Getting UART service");      
+    var service = await bluetooth.getPrimaryService(UART_SERVICE_ID);
+    console.log("Getting characteristic");            
+    var characteristic = await service.getCharacteristic(CHARACTERISTIC_RX);
+    console.log("Write value");    
+    let encoder = new TextEncoder(); // Encode string to bytes
+    let textToWrite = "Hello BLE!";  // Your string here
+    let data = encoder.encode(textToWrite);    
+    await characteristic.writeValue(data);
+    var characteristic_tx = await service.getCharacteristic(CHARACTERISTIC_TX);
+    await characteristic_tx.startNotifications();
+    characteristic_tx.addEventListener('characteristicvaluechanged', handleNotifications);    
+  });
+}
+
+        
+
+function connectButton()
+{
+  requestDevice();
+}
+
+async function requestDevice() {
+  console.log('Requesting any Bluetooth Device...');
+  var device = await navigator.bluetooth.requestDevice({
+   // filters: [...] <- Prefer filters to save energy & show relevant devices.
+      acceptAllDevices: true,
+      optionalServices: [ UART_SERVICE_ID ] // TODO
+    });
+   await connectDevice(device);
+   console.log("Device connected");
+}
+
+
+async function sendMessage() {
+    var inputField = document.getElementById('log-message-input');
+    let textToWrite = inputField.value;  // Your string here
+    var service = await bluetooth.getPrimaryService(UART_SERVICE_ID);
+    console.log("Getting characteristic");            
+    var characteristic = await service.getCharacteristic(CHARACTERISTIC_RX);
+    console.log("Write value");    
+    let encoder = new TextEncoder(); // Encode string to bytes
+    let data = encoder.encode(textToWrite);    
+    await characteristic.writeValue(data);
+}
+
+function decode(encoded)
+{
+    var decoder = new TextDecoder('utf-8');
+    var decoded_value = decoder.decode(encoded);
+    return JSON.stringify(decoded_value)
+}
+
+
+
+function handleNotifications(event) {
+    let value = event.target.value;
+    let decoder = new TextDecoder('utf-8');
+    let str = decoder.decode(value);
+
+    console.log(`Received notification: ${str}`);
+    var newLogEntry = document.createElement("p");
+    newLogEntry.textContent = str;    
+    var loggingDiv = document.getElementById('logging-info');
+    loggingDiv.appendChild(newLogEntry);
+    
+    
+}
+
+async function onDisconnected() {
+  console.log('> Bluetooth Device disconnected');
+  try {
+    await connectDeviceAndCacheCharacteristics()
+  } catch(error) {
+    console.log('Argh! ' + error);
+  }
+}
+
+</script>
+</body>
