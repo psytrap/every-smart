@@ -2,5 +2,5 @@ Welcome to EverySmart
 
 Access your Bluetooth devices without installing an App.
 Checkout:
-* [24/ Temperature Sensor](24-7-temperature-sensor/raspi_cputemp.html)
-
+* [24/7 Temperature Sensor](24-7-temperature-sensor/index.html)
+* [Bluetooth Echo](bluetooth-echo/index.html)
