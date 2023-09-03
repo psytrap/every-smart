@@ -47,29 +47,7 @@ const CHARACTERISTIC_TX = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
 const CHARACTERISTIC_RX = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
 //const SERVICE_ID = "00000001-710e-4a5b-8d75-3e5b444bc3cf"
 //const CHARACTERISTIC_ID = '00000002-710e-4a5b-8d75-3e5b444bc3cf';
-//const CHARACTERISTIC_HISTORY_ID = '00000003-710e-4a5b-8d75-3e5b444bc3cf';
-
-
-async function connectDevice(device) {
-  device.addEventListener('gattserverdisconnected', onDisconnected);
-  bluetooth = await device.gatt.connect();
-  return new Promise(async (resolve) => {
-    console.log("Getting UART service");      
-    var service = await bluetooth.getPrimaryService(UART_SERVICE_ID);
-    console.log("Getting characteristic");            
-    var characteristic = await service.getCharacteristic(CHARACTERISTIC_RX);
-    console.log("Write value");    
-    let encoder = new TextEncoder(); // Encode string to bytes
-    let textToWrite = "Hello BLE!";  // Your string here
-    let data = encoder.encode(textToWrite);    
-    await characteristic.writeValue(data);
-    var characteristic_tx = await service.getCharacteristic(CHARACTERISTIC_TX);
-    await characteristic_tx.startNotifications();
-    characteristic_tx.addEventListener('characteristicvaluechanged', handleNotifications);    
-  });
-}
-
-        
+//const CHARACTERISTIC_HISTORY_ID = '00000003-710e-4a5b-8d75-3e5b444bc3cf';    
 
 function connectButton()
 {
@@ -87,6 +65,20 @@ async function requestDevice() {
    console.log("Device connected");
 }
 
+async function onDisconnected() {
+  console.log('> Bluetooth Device disconnected');
+}
+
+
+
+/*
+    var characteristic = await service.getCharacteristic(CHARACTERISTIC_RX);
+    console.log("Write value");    
+    let encoder = new TextEncoder(); // Encode string to bytes
+    let textToWrite = "Hello BLE!";  // Your string here
+    let data = encoder.encode(textToWrite);    
+    await characteristic.writeValue(data);
+*/
 
 async function sendMessage() {
     var inputField = document.getElementById('log-message-input');
@@ -100,14 +92,19 @@ async function sendMessage() {
     await characteristic.writeValue(data);
 }
 
-function decode(encoded)
-{
-    var decoder = new TextDecoder('utf-8');
-    var decoded_value = decoder.decode(encoded);
-    return JSON.stringify(decoded_value)
+
+async function connectDevice(device) {
+  device.addEventListener('gattserverdisconnected', onDisconnected);
+  bluetooth = await device.gatt.connect();
+  return new Promise(async (resolve) => {
+    console.log("Getting UART service");      
+    var service = await bluetooth.getPrimaryService(UART_SERVICE_ID);
+    console.log("Getting characteristic");            
+    var characteristic_tx = await service.getCharacteristic(CHARACTERISTIC_TX);
+    await characteristic_tx.startNotifications();
+    characteristic_tx.addEventListener('characteristicvaluechanged', handleNotifications);    
+  });
 }
-
-
 
 function handleNotifications(event) {
     let value = event.target.value;
@@ -118,19 +115,17 @@ function handleNotifications(event) {
     var newLogEntry = document.createElement("p");
     newLogEntry.textContent = str;    
     var loggingDiv = document.getElementById('logging-info');
-    loggingDiv.appendChild(newLogEntry);
-    
-    
+    loggingDiv.appendChild(newLogEntry);    
 }
 
-async function onDisconnected() {
-  console.log('> Bluetooth Device disconnected');
-  try {
-    await connectDeviceAndCacheCharacteristics()
-  } catch(error) {
-    console.log('Argh! ' + error);
-  }
+function decode(encoded)
+{
+    var decoder = new TextDecoder('utf-8');
+    var decoded_value = decoder.decode(encoded);
+    return JSON.stringify(decoded_value)
 }
+
+
 
 </script>
 </body>
