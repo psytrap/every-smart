@@ -4,7 +4,7 @@
   <input type="text" id="device_status" name="device_status" readonly>
 
   <h1>Temperatur</h1>
-  <label for="cpu_temp_unit">Unit:</label>
+  <!--<label for="cpu_temp_unit">Unit:</label>
   <!--<select name="cpu_temp_unit" id="cpu_temp_unit">
     <option value="C">°C</option>
     <option value="F">°F</option>
@@ -39,11 +39,24 @@
     <line x1="275" y1="50" x2="275" y2="250" class="axis" />
     
     <!-- Data Line -->
-    <polyline id="dataLine24hours" points="" class="line" />
+    <polyline id="dataLine24hours_1" points="" class="line" />
+    <polyline id="dataLine24hours_2" points="" class="line" />
+
+    <!-- Annotation -->
+    <text text-anchor="end" x="40" y="255">-20</text>
+    <text text-anchor="end" x="40" y="205">0</text>
+    <text text-anchor="end" x="40" y="155">20</text>
+    <text text-anchor="end" x="40" y="105">40</text>
+    <text text-anchor="end" x="40" y="55">60</text>                            
+    <text x="45" y="275">0</text>
+    <text x="120" y="275">6</text>
+    <text x="190" y="275">12</text>
+    <text x="265" y="275">18</text>
+    <text x="345" y="275">0</text>
   </svg>
   <br />
   <h1>7 Days History</h1>
-  <svg width="400" height="300">
+  <svg width="590" height="300">
     <style>
         .line {
             stroke: black;
@@ -55,29 +68,51 @@
             fill: none;            
             stroke-width: 1;
         }
+        text {
+            font-family: "sans-serif";
+            font-size: 24px;
+        }        
     </style>
     <!-- Axis -->
-    <polygon points="50,50 50,250 350,250 350,50" class="axis" />
-    <line x1="50" y1="100" x2="350" y2="100" class="axis" />
-    <line x1="50" y1="150" x2="350" y2="150" class="axis" />
-    <line x1="50" y1="200" x2="350" y2="200" class="axis" />
+    <polygon points="50,50 50,250 540,250 540,50" class="axis" />
+    <line x1="50" y1="100" x2="540" y2="100" class="axis" />
+    <line x1="50" y1="150" x2="540" y2="150" class="axis" />
+    <line x1="50" y1="200" x2="540" y2="200" class="axis" />
 
-    <line x1="125" y1="50" x2="125" y2="250" class="axis" />
-    <line x1="200" y1="50" x2="200" y2="250" class="axis" />
-    <line x1="275" y1="50" x2="275" y2="250" class="axis" />
-    
+    <line x1="120" y1="50" x2="120" y2="250" class="axis" />
+    <line x1="190" y1="50" x2="190" y2="250" class="axis" />
+    <line x1="260" y1="50" x2="260" y2="250" class="axis" />
+    <line x1="330" y1="50" x2="330" y2="250" class="axis" />
+    <line x1="400" y1="50" x2="400" y2="250" class="axis" />
+    <line x1="470" y1="50" x2="470" y2="250" class="axis" />
+        
     <!-- Data Line -->
-    <polyline id="dataLine7days" points="" class="line" />
+    <polyline id="dataLine7days_1" points="" class="line" />
+    <polyline id="dataLine7days_2" points="" class="line" />
+    <!-- Annotation -->
+    <text text-anchor="end" x="40" y="255">-20</text>
+    <text text-anchor="end" x="40" y="205">0</text>
+    <text text-anchor="end" x="40" y="155">20</text>
+    <text text-anchor="end" x="40" y="105">40</text>
+    <text text-anchor="end" x="40" y="55">60</text>                            
+    <text x="70" y="275">MO</text>
+    <text x="140" y="275">TU</text>
+    <text x="210" y="275">MI</text>
+    <text x="280" y="275">DO</text>
+    <text x="350" y="275">FR</text>
+    <text x="420" y="275">SA</text>
+    <text x="490" y="275">SO</text>
   </svg>
   <br />
   <button id="update_history"  onclick="updateHistory()">Update History</button>
+  <!-- <button id="test_history"  onclick="testHistory()">Test History</button>  -->
 </div>
 <script id="es_script">
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API
 // https://googlechrome.github.io/samples/web-bluetooth/discover-services-and-characteristics-async-await.html
 
-var bluetooth = null;
+let bluetooth = null;
 const SERVICE_ID = '00000001-710e-4a5b-8d75-3e5b444bc3cf';
 const CHARACTERISTIC_ID = '00000002-710e-4a5b-8d75-3e5b444bc3cf';
 const CHARACTERISTIC_24HOURS_ID = '00000003-710e-4a5b-8d75-3e5b444bc3cf';
@@ -89,9 +124,9 @@ async function connectDevice(device) {
   bluetooth = await device.gatt.connect();
   return new Promise(async (resolve) => {
     console.log("Getting temperature service");      
-    var service = await bluetooth.getPrimaryService(SERVICE_ID);
+    let service = await bluetooth.getPrimaryService(SERVICE_ID);
     console.log("Getting characteristic");            
-    var characteristic = await service.getCharacteristic(CHARACTERISTIC_ID);
+    let characteristic = await service.getCharacteristic(CHARACTERISTIC_ID);
     console.log("Adding temperature listener");
     characteristic.addEventListener('characteristicvaluechanged', onTemperatureNotify);    
     await characteristic.startNotifications();
@@ -108,10 +143,10 @@ function connectButton()
 
 async function requestDevice() {
   console.log('Requesting any Bluetooth Device...');
-  var device = await navigator.bluetooth.requestDevice({
+  let device = await navigator.bluetooth.requestDevice({
    // filters: [...] <- Prefer filters to save energy & show relevant devices.
       acceptAllDevices: true,
-      optionalServices: [SERVICE_ID] // TODO
+      optionalServices: [SERVICE_ID]
     });
    await connectDevice(device);
    console.log("Device connected");
@@ -126,56 +161,178 @@ function onTemperatureNotify(event)
 }
 
 
-
-
 function decode(encoded)
 {
-    var decoder = new TextDecoder('utf-8');
-    var decoded_value = decoder.decode(encoded);
-    return JSON.stringify(decoded_value)
+  let decoder = new TextDecoder('utf-8');
+  let decoded_value = decoder.decode(encoded);
+  return JSON.stringify(decoded_value)
 }
 
 
+function percentageOfWeek()
+{
+  // Get the current date and time
+  const now = new Date();
+  // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  let dayOfWeek = now.getDay();
+  dayOfWeek = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // Adjust to 0 = Monday
+  // Get the current time in seconds since midnight
+  const secondsSinceMidnight =
+    now.getHours() * 60 * 60 +
+    now.getMinutes() * 60;
+  // Calculate the total seconds elapsed in the week so far
+  const totalSecondsElapsed = dayOfWeek * 24 * 60 * 60 + secondsSinceMidnight;
+  const totalSecondsInWeek = 7 * 24 * 60 * 60;
+  // Calculate the percentage of the week that has passed
+  return totalSecondsElapsed / totalSecondsInWeek;
+}
 
-async function updateHistory () {
-  let dataLine = document.getElementById('dataLine24hours');
-  // let axis = [ 0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]; // 12x
+
+function percentageOfDay()
+{
+  // Get the current date and time
+  const now = new Date();
+
+  // Get the current time in seconds since midnight
+  const totalSecondsElapsed =
+    now.getHours() * 60 * 60 +
+    now.getMinutes() * 60;
+
+
+  const totalSecondsInDay = 24 * 60 * 60;
+  // Calculate the percentage of the week that has passed
+  return totalSecondsElapsed / totalSecondsInDay;
+}
+
+
+async function updateHistory()
+{
+  let service = await bluetooth.getPrimaryService(SERVICE_ID);
+  {
+    let characteristic = await service.getCharacteristic(CHARACTERISTIC_7DAYS_ID);
+    let raw_values = await characteristic.readValue();
+    const values = await decodeHistory(raw_values);
+    console.log(values);
+    await updateHistory7days(values);
+  }
+  {
+    let characteristic = await service.getCharacteristic(CHARACTERISTIC_24HOURS_ID);
+    let raw_values = await characteristic.readValue();
+    const values = await decodeHistory(raw_values);
+    console.log(values);
+    await updateHistory24hours(values);  
+  }
+}
+
+
+async function decodeHistory(raw)
+{
+  let values = [];
+  for (let i = 0; i < raw.byteLength; i++) {
+    values.push(raw.getUint8(i) / 2. - 20. );
+  }
+  return values.reverse();
+}
+
+
+async function testHistory()
+{
+  let values = [];
+  let length = 400;
+  // 7 * 24 * 2 = 338 // 24 * 12 = 288
+  for (let i = 0; i < length; i++) {
+    let value = i % 81;  // Loop from -20 to 60 (81 numbers)
+    values.push(value);
+  }
+  console.log(values.length);
+  values.splice(338+1);
+  updateHistory7days(values);
+  
+  values.splice(288+1);
+  updateHistory24hours(values);
+}
+
+
+async function updateHistory24hours (values) {
+  let dataLine_1 = document.getElementById('dataLine24hours_1');
+  let dataLine_2 = document.getElementById('dataLine24hours_2');  
   let start = 0;
   let end = 300;
-  let n = 61;
+  let n = 24*12+1;
   let step = (end - start) / (n - 1);
   let axis = Array.from({length: n}, (_, i) => start + i * step);
   
+  let data_1 = []; let data_2 = [];
   
   
-  let data = [];
+  let split = Math.round(n * percentageOfDay());
+  let axis_1 = axis.slice(0, split).reverse(); // TODO one off?? Math.ceil()??
+  let axis_2 = axis.slice(split).reverse();
   
-  var service = await bluetooth.getPrimaryService(SERVICE_ID);
-  var characteristic = await service.getCharacteristic(CHARACTERISTIC_24HOURS_ID);
-  var raw_values = await characteristic.readValue();
-  var characteristic = await service.getCharacteristic(CHARACTERISTIC_7DAYS_ID);
-  var raw_values = await characteristic.readValue();
-  const values = [];
-  for (let i = 0; i < raw_values.byteLength; i++) {
-    values.push(raw_values.getUint8(i) / 2. - 20. );
-  }
-  console.log(values)
-  
-  
-  axis.forEach(function (item) {
-    if (values.length > 0) {    
-      var newData =  {x: item, y: parseInt(values.shift())*200/80};
-      data.push(newData);
+  //let values_2 = values.slice(0, n-split)
+  //let values_1 = values.slice(n-split-1) // duplicate value at split
+  let values_1 = values.slice(0, split)
+  let values_2 = values.slice(split-1) // duplicate value at split
+
+
+  axis_1.forEach(function (item) {
+    if (values_1.length > 0) {    
+      let newData =  {x: item, y: (values_1.shift() + 20)*200/80};
+      data_1.push(newData);
     }
   })  
   // Update line
-  dataLine.setAttribute('points', data.map(d => `${d.x+50},${250-d.y}`).join(' '));
+  dataLine_1.setAttribute('points', data_1.map(d => `${d.x+50},${250-d.y}`).join(' '));
+  axis_2.forEach(function (item) {
+    if (values_2.length > 0) {    
+      let newData =  {x: item, y: (values_2.shift() + 20)*200/80};
+      data_2.push(newData);
+    }
+  })  
+  // Update line
+  dataLine_2.setAttribute('points', data_2.map(d => `${d.x+50},${250-d.y}`).join(' '));
+}
+
+async function updateHistory7days (values) {
+  let dataLine_1 = document.getElementById('dataLine7days_1');
+  let dataLine_2 = document.getElementById('dataLine7days_2');  
+  let start = 0;
+  let end = 490;
+  let n = 7*24*2+1;
+  let step = (end - start) / (n - 1);
+  let axis = Array.from({length: n}, (_, i) => start + i * step);
+  
+  let data_1 = []; let data_2 = [];
+    
+  let split = Math.round(n * percentageOfWeek());
+  let axis_1 = axis.slice(0, split).reverse(); // TODO one off?? Math.ceil()??
+  let axis_2 = axis.slice(split).reverse();
+  
+  let values_1 = values.slice(0, split);
+  let values_2 = values.slice(split-1); // duplicate value at split
+    
+  axis_1.forEach(function (item) {
+    if (values_1.length > 0) {    
+      let newData =  {x: item, y: (values_1.shift() + 20)*200/80};
+      data_1.push(newData);
+    }
+  })  
+  // Update line
+  dataLine_1.setAttribute('points', data_1.map(d => `${d.x+50},${250-d.y}`).join(' '));
+  axis_2.forEach(function (item) {
+    if (values_2.length > 0) {    
+      let newData =  {x: item, y: (values_2.shift() + 20)*200/80};
+      data_2.push(newData);
+    }
+  })  
+  // Update line
+  dataLine_2.setAttribute('points', data_2.map(d => `${d.x+50},${250-d.y}`).join(' '));
 }
 
 async function onDisconnected() {
   console.log('> Bluetooth Device disconnected');
   try {
-    await connectDeviceAndCacheCharacteristics()
+    // TODO await connectDeviceAndCacheCharacteristics()
   } catch(error) {
     console.log('Argh! ' + error);
   }
