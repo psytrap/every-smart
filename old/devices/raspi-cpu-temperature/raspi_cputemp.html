@@ -1,0 +1,135 @@
+<div id="es_html">
+  <h1>CPU Temperatur</h1>
+  <label for="cpu_temp_unit">Unit:</label>
+  <select name="cpu_temp_unit" id="cpu_temp_unit">
+    <option value="C">C</option>
+    <option value="F">F</option>
+  </select>
+  <br />
+  <label for="cpu_temp">CPU temperature:</label>
+  <input type="text" id="cpu_temp" name="cpu_temp" readonly>
+  <label for="cpu_temp_time">last update:</label>
+  <input type="text" id="cpu_temp_time" name="cpu_temp_time" readonly>
+  <h1>60 Minutes History</h1>
+  <svg width="400" height="300">
+    <style>
+        .line {
+            stroke: black;
+            fill: none;
+            stroke-width: 2;
+        }
+        .axis {
+            stroke: gray;
+            fill: none;            
+            stroke-width: 1;
+        }
+    </style>
+    <!-- Axis -->
+    <polygon points="50,50 50,250 350,250 350,50" class="axis" />
+    <line x1="50" y1="100" x2="350" y2="100" class="axis" />
+    <line x1="50" y1="150" x2="350" y2="150" class="axis" />
+    <line x1="50" y1="200" x2="350" y2="200" class="axis" />
+
+    <line x1="125" y1="50" x2="125" y2="250" class="axis" />
+    <line x1="200" y1="50" x2="200" y2="250" class="axis" />
+    <line x1="275" y1="50" x2="275" y2="250" class="axis" />
+    
+    <!-- Data Line -->
+    <polyline id="dataLine" points="" class="line" />
+  </svg>
+  <br />
+  <button id="update_history"  onclick="window.postMessage('updateHistory')">Update History</button>
+</div>
+<script id="es_script" type="module">
+console.log("debug.js");
+
+import { ES } from './common.js';
+
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API
+
+var bluetooth = null;
+const SERVICE_ID = '00000001-710e-4a5b-8d75-3e5b444bc3cf';
+const CHARACTERISTIC_ID = '00000002-710e-4a5b-8d75-3e5b444bc3cf';
+const CHARACTERISTIC_HISTORY_ID = '00000003-710e-4a5b-8d75-3e5b444bc3cf';
+
+
+function decode_ble(encoded)
+{
+    var decoder = new TextDecoder('utf-8');
+    var decoded_value = decoder.decode(encoded);
+    return JSON.stringify(decoded_value)
+}
+
+
+async function messageHandler(event) {
+  if ( typeof event.data === 'string' ) {
+    console.log(event.data)
+    if ( event.data === "updateHistory") {
+      updateHistory()
+    }
+    return
+  }
+
+  var id = event.data.id; // TODO
+  var request = event.data.request;
+  console.log(request);
+
+
+
+  if (request === (ES.DEVICE.REQUESTED_AND_CONNECTED_AND_LOADED + ES.REQUEST) ) {
+    var msg = {
+      request : (ES.DEVICE.REQUESTED_AND_CONNECTED_AND_LOADED + ES.RESPONSE),
+      call_id : event.data.call_id
+    }
+    window.parent.postMessage(msg, window.location.origin);  
+    bluetooth = new ES.BluetoothDevice(event.data.bluetooth_id);
+    //bluetooth = ES.receiveDeviceRequestedAndConnected(event.data);
+    var service = await bluetooth.getPrimaryService(SERVICE_ID);
+    var characteristic = await service.getCharacteristic(CHARACTERISTIC_ID);
+    console.log("reading value");
+    var value = await characteristic.readValue();
+    console.log("value read");
+    var decoded_value = decode_ble(value);
+    console.log( decoded_value );
+    let cpu_temp = document.getElementById('cpu_temp');
+    cpu_temp.value = decoded_value
+  }
+}
+
+window.addEventListener('message', messageHandler);
+
+
+async function updateHistory () {
+  let dataLine = document.getElementById('dataLine');
+  // let axis = [ 0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300]; // 12x
+  let start = 0;
+  let end = 300;
+  let n = 61;
+  let step = (end - start) / (n - 1);
+  let axis = Array.from({length: n}, (_, i) => start + i * step);
+  
+  
+  
+  let data = [];
+  
+  var service = await bluetooth.getPrimaryService(SERVICE_ID);
+  var characteristic = await service.getCharacteristic(CHARACTERISTIC_HISTORY_ID);
+  var value = await characteristic.readValue();
+  var decoded_value = decode_ble(value);
+  // to array
+  decoded_value = decoded_value.slice(1, -1)
+  var values = decoded_value.split(" ").reverse()
+
+  
+  
+  axis.forEach(function (item) {
+    if (values.length > 0) {    
+      var newData =  {x: item, y: parseInt(values.shift())*200/80};
+      data.push(newData);
+    }
+  })  
+  // Update line
+  dataLine.setAttribute('points', data.map(d => `${d.x+50},${250-d.y}`).join(' '));
+}
+</script>
+

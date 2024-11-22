@@ -130,9 +130,7 @@ async function connectDevice(device) {
     console.log("Adding temperature listener");
     characteristic.addEventListener('characteristicvaluechanged', onTemperatureNotify);    
     await characteristic.startNotifications();
-    //const value = await characteristic.readValue();
-    //let cpu_temp = document.getElementById('cpu_temp');
-    //cpu_temp.value = decode(value);
+    updateHistory();
   });
 }
 
