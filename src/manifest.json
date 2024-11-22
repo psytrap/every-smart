@@ -1,0 +1,19 @@
+{
+  "name": "Every Smart",
+  "description": "Connect with Every Smart device without installing an app.",
+  "version": "0.3",
+  "action": {
+  },  
+  
+  "manifest_version": 3,
+  "web_accessible_resources": [
+      {
+         "resources": ["every-smart.html", "every-smart.js", "common.js"],
+         "matches": []
+      }],  
+
+"background": {
+    "service_worker": "background.js"
+},
+  "icons": { "16": "images/every-smart-16.png", "128": "/images/every-smart-128.png" }
+}

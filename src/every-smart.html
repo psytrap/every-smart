@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Every Smart - Connect with everything</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wang0618/PyWebIO-assets@v1.8.3/css/bs-theme/dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wang0618/PyWebIO-assets@v1.8.3/css/app.min.css">
+  <style>
+    /* TODO lokal CSS */
+    /*@import url('https://cdn.jsdelivr.net/gh/wang0618/PyWebIO-assets@v1.8.3/css/bs-theme/dark.min.css');*/
+    /*
+    body {
+      background-color: bg-gray-900; 
+      color: text-gray-50; 
+    }
+
+    .main_body {
+      @apply w-[850px] mx-auto bg-gray-800 text-white p-8;
+    }*/
+  </style>
+</head>
+
+<body class="webio-theme-dark">
+  <div class="pywebio" style="">
+    <div id="output-container" class="main_body container no-fix-height">
+      <div class="markdown-body">
+        <div id="es-bluetooth" style="display: grid; gap: 10px; grid-auto-flow: column;">
+          <div class="form-group">
+            <label for="device_status">Connection status:</label>
+            <input type="text" id="device_status" class="form-control" name="device_status" value="Disconnected" readonly>
+          </div>
+          <div>
+            <button id="connect_device" class="btn btn-primary">Connect to device</button>
+            <button id="disconnect_device" class="btn btn-primary" disabled>Disconnect</button>
+          </div>
+        </div>
+        <hr>
+        <div id="es-root"></div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="every-smart.js"></script>
+
+</body>
+
+</html>
