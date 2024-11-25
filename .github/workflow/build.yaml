@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Pack Extension
-      run: chrome --pack-extension=./meine_erweiterung  # Ersetze 'meine_erweiterung' durch den Namen deines Erweiterungsverzeichnisses
+      run: chrome --pack-extension=./src  # Ersetze 'meine_erweiterung' durch den Namen deines Erweiterungsverzeichnisses
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
