@@ -14,10 +14,12 @@ jobs:
       - uses: actions/checkout@v4
   
       - name: Pack Extension
-        run: chrome --pack-extension=./src
+        run: chrome --pack-extension=./src && mv src.crx every-smart.crx && mv src.pem every-smart.pem
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: extension-crx
-          path: every-smart.crx
+          path: |
+            every-smart.crx
+            every-smart.pem
