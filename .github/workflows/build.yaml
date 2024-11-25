@@ -8,15 +8,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: browser-actions/setup-chrome@v1
+      - run: chrome --version
+#    steps:
+#    - uses: actions/checkout@v4
 
-    - name: Pack Extension
-      run: chrome --pack-extension=./src
+#    - name: Pack Extension
+#      run: chrome --pack-extension=./src
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: extension-crx
-        path: every-smart.crx
+#    - name: Upload Artifact
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: extension-crx
+#        path: every-smart.crx
