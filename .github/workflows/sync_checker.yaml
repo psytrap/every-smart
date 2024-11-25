@@ -1,0 +1,36 @@
+name: Sync Checker
+
+on:
+  push:
+    branches:
+      - main  # Replace with your desired branch
+
+jobs:
+  compare_files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Compare files
+        run: |
+          function compare_files {
+            local file1="$1"
+            local file2="$2"
+            if ! diff "$file1" "$file2"; then
+              echo "Error: Files '$file1' and '$file2' not in sync!"
+              exit 1
+            fi
+          }
+
+          errors=0
+          compare_files ./src/every-smart.html ./docs/every-smart.html || errors=1
+          compare_files ./src/every-smart.js ./docs/every-smart.js || errors=1
+          compare_files ./src/app.min.css ./docs/app.min.css || errors=1
+          compare_files ./src/dark.min.css ./docs/dark.min.css || errors=1
+          compare_files ./src/images/every-smart-16.png ./docs/images/every-smart-16.png || errors=1
+          if [ "$errors" -eq 1 ]; then
+            echo "One or more files not in sync!"
+            exit 1
+          fi
+          
