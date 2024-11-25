@@ -24,10 +24,10 @@ jobs:
           }
 
           errors=0
-          compare_files ./src/every-smart.html ./docs/index.html || errors=1
-          compare_files ./src/every-smart.js ./docs/every-smart.js || errors=1
-          compare_files ./src/app.min.css ./docs/app.min.css || errors=1
-          compare_files ./src/dark.min.css ./docs/dark.min.css || errors=1
+          compare_files ./src/every-smart.html  ./docs/index.html                        || errors=1
+          compare_files ./src/every-smart.js    ./docs/every-smart.js                    || errors=1
+          compare_files ./src/css/app.min.css   ./docs/css/app.min.css                   || errors=1
+          compare_files ./src/css/dark.min.css  ./docs/css/dark.min.css                  || errors=1
           compare_files ./src/images/every-smart-16.png ./docs/images/every-smart-16.png || errors=1
           if [ "$errors" -eq 1 ]; then
             echo "One or more files not in sync!"
