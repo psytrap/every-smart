@@ -1,0 +1,22 @@
+name: Chrome Extension Build
+
+on:
+  push:
+    branches:
+      - main  # Oder welcher Branch auch immer du verwenden möchtest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Pack Extension
+      run: chrome --pack-extension=./src  # Ersetze 'meine_erweiterung' durch den Namen deines Erweiterungsverzeichnisses
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-crx
+        path: *.crx
