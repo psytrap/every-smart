@@ -1,9 +1,10 @@
 
 console.log("every-smart.js");
 
-var UART_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase(); // TODO ES_SERVICE_UUID
-var UART_CHARACTERISTIC_UUID_RX = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
-var UART_CHARACTERISTIC_UUID_TX = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E".toLowerCase();
+//                      '00001234-0000-1000-8000-00805f9b34fb'
+var UART_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-111C0FFEE111".toLowerCase(); // TODO ES_SERVICE_UUID
+var UART_CHARACTERISTIC_UUID_RX = "6E400002-B5A3-F393-E0A9-111C0FFEE111".toLowerCase();
+var UART_CHARACTERISTIC_UUID_TX = "6E400003-B5A3-F393-E0A9-111C0FFEE111".toLowerCase();
 
 var bluetooth = {
   device: null,
@@ -22,7 +23,7 @@ function queueAsyncOperation(operation) {
 
 async function processAsyncQueue() {
   if (isQueueBusy || asyncQueue.length === 0) return;
-
+  // TODO skip outdate operations for same id
   isQueueBusy = true;
   const currentOperation = asyncQueue.shift();
 
@@ -115,6 +116,10 @@ async function requestDevice() {
       while (es_root.firstElementChild) {
         es_root.removeChild(es_root.lastElementChild);
       }
+      var title = jsonCommand.payload.title;
+      var element = document.createElement("h1");
+      element.innerText = title;
+      es_root.append(element);
       parsePagePayload(jsonCommand.payload, es_root);
     }
     if (jsonCommand.command === "set_value") {
@@ -129,15 +134,20 @@ async function requestDevice() {
       const service = await bluetooth.server.getPrimaryService(UART_SERVICE_UUID);
       const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
       queueAsyncOperation(async () => {
-        await characteristic_rx.writeValueWithoutResponse(encode(`#{"event": "requested_value", "payload": {"id": "${id}", "value": "${value}"} }`));
+        await characteristic_rx.writeValueWithResponse(encode(`#{"event": "requested_value", "payload": {"id": "${id}", "value": "${value}"} }`));
       });
     }
     if (jsonCommand.command === "set_image") {
       let id = jsonCommand.payload.id;
       let element = es_root.querySelector(`#${id}`);
       element.setAttribute("src", jsonCommand.payload.src);
-
     }
+    if (jsonCommand.command === "ping") {
+      queueAsyncOperation(async () => {
+        await characteristic_rx.writeValueWithResponse(encode(`#{"event": "pong" }`));
+      });
+    }
+
   });
 
   const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
@@ -148,63 +158,147 @@ async function requestDevice() {
   status.setAttribute("value", "Connected");
 }
 
-function parsePagePayload(payload, dom) {
-  const type = payload.type;
-  if (type === "button") {
-    let element = document.createElement("div");
-    let button = document.createElement("button");
-    button.setAttribute("id", payload.properties.id);
-    button.setAttribute("class", "btn btn-primary");
-    button.textContent = payload.properties.label;
+function createButton(payload) {
+  let element = document.createElement("div");
+  element.setAttribute("class", "btn-group");
+  let button = document.createElement("button");
+  button.setAttribute("id", payload.properties.id);
+  button.setAttribute("class", "btn btn-primary");
+  button.textContent = payload.properties.label;
+  if (payload.properties.edges !== "true") {
     button.addEventListener('click', async function () {
       const service = await bluetooth.server.getPrimaryService(UART_SERVICE_UUID);
       const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
       queueAsyncOperation(async () => {
-        await characteristic_rx.writeValueWithoutResponse(encode("#{\"event\": \"click\", \"payload\": {\"id\": \"" + this.id + "\"} }"));
+        await characteristic_rx.writeValueWithoutResponse(encode("#{\"event\": \"input\", \"payload\": {\"id\": \"" + this.id + "\", \"value\": \"clicked\"} }"));
       });
-
       console.log("Button clicked: " + this.id);
     });
-    element.append(button);
-    dom.append(element);
-  }
-  if (type === "text" || type === "number" || type === "time") {
-    let element = document.createElement("div");
-    element.setAttribute("class", "form-group");
-    let label = document.createElement("label");
-    label.setAttribute("for", payload.properties.id);
-    label.textContent = payload.properties.label;
-    let input = document.createElement("input");
-    input.setAttribute("type", type);
-    input.setAttribute("id", payload.properties.id);
-    input.setAttribute("class", "form-control");
-    input.setAttribute("value", payload.properties.value);
-    if (payload.properties.readonly === "true") {
-      input.readOnly = true;
-    }
-    if (type === "number") {
-      input.setAttribute("step", payload.properties.step);
-    }
-    if (payload?.properties?.update !== "false") {
-      input.addEventListener('input', async function () {
+  } else {
+    for (const name of ['pointerup', 'pointerdown']) {
+      button.addEventListener(name, async function (event) {
         const service = await bluetooth.server.getPrimaryService(UART_SERVICE_UUID);
         const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
+        var value;
+        if (event.type === 'pointerdown') {
+          value = 'pressed';
+        } else {
+          value = 'released';
+
+        }
         queueAsyncOperation(async () => {
-          await characteristic_rx.writeValueWithoutResponse(encode("#{\"event\": \"input\", \"payload\": {\"id\": \"" + this.id + "\", \"value\": \"" + this.value + "\"} }"));
+          await characteristic_rx.writeValueWithoutResponse(encode("#{\"event\": \"input\", \"payload\": {\"id\": \"" + this.id + "\", \"value\": \"" + value + "\"} }"));
         });
-        console.log("Value input: " + this.id);
+        console.log("Button clicked: " + this.id);
+      });    
+    };
+  }
+  element.append(button);
+  return element;
+}
+
+function createInput(payload, type) {
+  let element = document.createElement("div");
+  element.setAttribute("class", "form-group");
+  let label = document.createElement("label");
+  label.setAttribute("for", payload.properties.id);
+  label.textContent = payload.properties.label;
+  let input = document.createElement("input");
+  input.setAttribute("type", type);
+  input.setAttribute("id", payload.properties.id);
+  input.setAttribute("class", "form-control");
+  input.setAttribute("value", payload.properties.value);
+  if (payload.properties.readonly === "true") {
+    input.readOnly = true;
+  }
+  if (type === "number") {
+    input.setAttribute("step", payload.properties.step);
+  }
+  if (payload?.properties?.update !== "false") {
+    input.addEventListener('input', async function () {
+      const service = await bluetooth.server.getPrimaryService(UART_SERVICE_UUID);
+      const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
+      queueAsyncOperation(async () => {
+        await characteristic_rx.writeValueWithoutResponse(encode("#{\"event\": \"input\", \"payload\": {\"id\": \"" + this.id + "\", \"value\": \"" + this.value + "\"} }"));
       });
-    }
-    element.append(label, input)
-    dom.append(element);
+      console.log("Value input: " + this.id);
+    });
+  }
+  element.append(label, input);
+  return element;
+}
+
+function createImage(payload) {
+  let element = document.createElement("div");
+  let image = document.createElement("img");
+  image.setAttribute("id", payload.properties.id);
+  image.setAttribute("src", payload.properties.src);
+  element.append(image);
+  return element;
+}
+
+function createTextView(payload) {
+  let element = document.createElement("div");
+  let p = document.createElement("p");
+  p.setAttribute("id", payload.properties.id);
+  p.innerHTML = payload.properties.value;
+  element.append(p);
+  return element;
+}
+
+function createSlider(payload) {
+  let element = document.createElement("div");
+  element.setAttribute("class", "form-group");
+  let label = document.createElement("label");
+  label.setAttribute("for", payload.properties.id);
+  label.textContent = payload.properties.label;
+  let slider = document.createElement("input");
+  slider.setAttribute("id", payload.properties.id);
+  slider.setAttribute("type", "range");
+  slider.setAttribute("id", payload.properties.id);
+  slider.setAttribute("class", "form-control");
+  slider.setAttribute("min", Number(payload.properties.min));
+  slider.setAttribute("max", Number(payload.properties.max));
+  slider.setAttribute("step", payload.properties.step);
+  slider.setAttribute("value", payload.properties.value);
+  if (payload?.properties?.update !== "false") {
+    slider.addEventListener('input', async function () {
+      const service = await bluetooth.server.getPrimaryService(UART_SERVICE_UUID);
+      const characteristic_rx = await service.getCharacteristic(UART_CHARACTERISTIC_UUID_RX);
+      var value = this.value;
+      console.log(value);
+      queueAsyncOperation(async () => {
+        await characteristic_rx.writeValueWithResponse(encode("#{\"event\": \"input\", \"payload\": {\"id\": \"" + this.id + "\", \"value\": \"" + value + "\"} }"));
+      });
+      console.log("Value input: " + this.id);
+    });
+  }
+
+  element.append(slider);
+  return element;
+
+}
+
+function parsePagePayload(payload, dom) {
+  const type = payload.type;
+  if (type === "button") {
+    dom.append(createButton(payload));
+  }
+  if (type === "text" || type === "number" || type === "time") {
+    dom.append(createInput(payload, type));
   }
   if (type === "image") {
-    let element = document.createElement("div");
-    let image = document.createElement("img");
-    image.setAttribute("id", payload.properties.id);
-    image.setAttribute("src", payload.properties.src);
-    element.append(image);
+    dom.append(createImage(payload));
+  }
+  if (type === "divider") {
+    let element = document.createElement("hr");
     dom.append(element);
+  }
+  if (type === "text_view") {
+    dom.append(createTextView(payload));
+  }
+  if (type === "slider") {
+    dom.append(createSlider(payload));
   }
   if (type === "layout") {
     let element = document.createElement("div");
