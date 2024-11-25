@@ -24,7 +24,7 @@ jobs:
           }
 
           errors=0
-          compare_files ./src/every-smart.html ./docs/every-smart.html || errors=1
+          compare_files ./src/every-smart.html ./docs/index.html || errors=1
           compare_files ./src/every-smart.js ./docs/every-smart.js || errors=1
           compare_files ./src/app.min.css ./docs/app.min.css || errors=1
           compare_files ./src/dark.min.css ./docs/dark.min.css || errors=1
