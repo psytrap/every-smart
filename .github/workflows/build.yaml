@@ -28,10 +28,15 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
-          body: |
-            Dies ist ein automatisiertes Release des Build-Artefakts.
+          body: Dies ist ein automatisiertes Release des Build-Artefakts.
           draft: false
           prerelease: false
+      - name: Release-Artefakt hochladen
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: every-smart.crx
           asset_name: every-smart.crx
-          asset_content_type: application/x-chrome-extension
+          asset_content_type: application/x-chrome-extension          
