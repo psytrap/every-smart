@@ -23,15 +23,17 @@ jobs:
           path: |
             every-smart.crx
             every-smart.pem
-      - name: Release erstellen
+      - name: Create release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: Dies ist ein automatisiertes Release des Build-Artefakts.
           draft: false
           prerelease: false
-      - name: Release-Artefakt hochladen
+      - name: Upload release artefacts
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
