@@ -5,6 +5,9 @@ on:
     branches:
       - main  # Oder welcher Branch auch immer du verwenden möchtest
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
