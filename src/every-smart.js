@@ -76,6 +76,16 @@ async function requestDevice() {
   connect.disabled = true;
   let status = document.getElementById("device_status");
   status.setAttribute("value", "Connecting");
+  while (es_root.firstElementChild) {
+    es_root.removeChild(es_root.lastElementChild);
+  }
+  if(  isWebBluetoothEnabled() != true ) {
+    var p = document.createElement("p");
+    p.textContent = "Please use Chrome or any Chromium/Blink based web browser. Also enable experimental flag \"Experimental Web Platform features\" in chrome://flags.";
+    es_root.append(p);
+    connectionFailed();
+    return;
+  }
 
   try {
     var device = await navigator.bluetooth.requestDevice({
@@ -113,9 +123,6 @@ async function requestDevice() {
     const jsonCommand = JSON.parse(chunk);
     chunk = '';
     if (jsonCommand.command === "page") {
-      while (es_root.firstElementChild) {
-        es_root.removeChild(es_root.lastElementChild);
-      }
       var title = jsonCommand.payload.title;
       var element = document.createElement("h1");
       element.innerText = title;
@@ -362,4 +369,12 @@ function decode(encoded) {
   var decoder = new TextDecoder('utf-8');
   var decoded_value = decoder.decode(encoded);
   return decoded_value; // JSON.stringify(decoded_value);
+}
+
+function isWebBluetoothEnabled() {
+  if (navigator.bluetooth) {
+    return true;
+  } else {
+    return false;
+  }
 }
