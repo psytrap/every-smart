@@ -31,4 +31,4 @@ Checkout the [examples](./examples) folder.
 
 To start the webapp visit: [psytrap.github.io/every-smart](https://psytrap.github.io/every-smart/)
 
-The Chrome extension can be found in the Github actions.
+The Chrome Extension app can be found in the Releases on the right sidebar.
